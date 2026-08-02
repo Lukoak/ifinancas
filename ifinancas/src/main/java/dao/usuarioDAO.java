@@ -40,10 +40,10 @@ public class usuarioDAO {
     }
 	
     public boolean cadastrar(String nome, String email, String senha_hash) {
-        String sql = "INSERT INTO usuario (nome, email, senha_hash) VALUES (?, ?, ?)";
+        String inserir = "INSERT INTO usuario (nome, email, senha_hash) VALUES (?, ?, ?)";
         
         try (Connection conn = conexao.getConexao();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(inserir)) {
             
             stmt.setString(1, nome);
             stmt.setString(2, email);
@@ -55,8 +55,5 @@ public class usuarioDAO {
             return false;
         }
     }
-    
-    
-    
     
 }
