@@ -1,7 +1,7 @@
 package model;
 
 public class auditoria {
-	private int id;
+	private Integer id;
 	private int usuario_id;
 	private Acao_auditoria acao;
 	private String tabela_nome;
@@ -9,11 +9,23 @@ public class auditoria {
 	private String valor_antigo;
 	private String valor_novo;
 	
+	public auditoria() {}
+	
+	public auditoria(Integer id, int usuario_id, Acao_auditoria acao, String tabela_nome, int registro_id, String valor_antigo, String valor_novo)
+	{
+		this.id = id;
+		this.usuario_id = usuario_id;
+		this.acao = acao;
+		this.tabela_nome = tabela_nome;
+		this.registro_id = registro_id;
+		this.valor_antigo = valor_antigo;
+		this.valor_novo = valor_novo;		
+	}
 	
 	public int getId() {
 		return id;
 	}
-	public void setId(int id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 	

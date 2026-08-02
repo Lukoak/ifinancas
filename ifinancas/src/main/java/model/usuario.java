@@ -1,17 +1,29 @@
 package model;
 
 public class usuario {
-	private int id;
+	private Integer id;
 	private String nome;
 	private String email;
 	private String senha_hash;
 	private StatusUsuario status_usuario;
+	
+	
+    public usuario() {}
+
+    public usuario(Integer id, String nome, String email, String senha_hash, StatusUsuario status_usuario) {
+        this.id = id;
+        this.nome = nome;
+        this.email = email;
+        this.senha_hash = senha_hash;
+        this.status_usuario = status_usuario;
+    }
+	
 	//=============================================getter e setter de id
 	public int getid()
 	{
 		return this.id;
 	}
-	public void setid(int id)
+	public void setid(Integer id)
 	{
 		this.id = id;
 	}

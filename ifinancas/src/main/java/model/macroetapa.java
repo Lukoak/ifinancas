@@ -1,15 +1,28 @@
 package model;
 
 public class macroetapa {
-	private int id;
+	private Integer id;
 	private int projeto_id;
 	private String numero;
 	private String descricao;
+	
+	
+	public macroetapa() {}
+	
+	public macroetapa(Integer id, int projeto_id, String numero, String descricao)
+	{
+		this.id = id;
+		this.projeto_id = projeto_id;
+		this.numero = numero;
+		this.descricao = descricao;
+	}
+	
+	
 	//======================getter e setter id===========================
 	public int getId() {
 		return id;
 	}
-	public void setId(int id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 	

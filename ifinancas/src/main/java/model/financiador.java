@@ -1,13 +1,22 @@
 package model;
 
 public class financiador {
-	private int id;
+	private Integer id;
 	private String nome;
+	
+	public financiador() {}
+	
+	public financiador(Integer id, String nome)
+	{
+		this.id = id;
+		this.nome = nome;	
+	}
+	
 	//======================getter e setter id===========================
 	public int getId() {
 		return id;
 	}
-	public void setId(int id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 	

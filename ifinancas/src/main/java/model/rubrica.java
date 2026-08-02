@@ -1,15 +1,25 @@
 package model;
 
 public class rubrica {
-	private int id;
+	private Integer id;
 	private categoria_rubrica categoria;
 	private int fk_item;
+	
+	public rubrica() {}
+	
+	public rubrica(Integer id, categoria_rubrica categoria, int fk_item)
+	{
+		this.id = id;
+		this.categoria = categoria;
+		this.fk_item = fk_item;
+	}
+	
 	
 	//======================getter e setter id===========================
 	public int getId() {
 		return id;
 	}
-	public void setId(int id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 

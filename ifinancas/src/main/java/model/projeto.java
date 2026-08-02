@@ -1,11 +1,23 @@
 package model;
 
 public class projeto {
-	private int id;
+	private Integer id;
 	private int coordenador_id;
 	private String titulo;
 	private Status_Projeto status_projeto;
 	private String descricao;
+	
+	
+	public projeto() {}
+	
+	public projeto(Integer id, int coordenador_id, String titulo, Status_Projeto status_projeto, String descricao)
+	{
+		this.id = id;
+		this.coordenador_id = coordenador_id;
+		this.titulo = titulo;
+		this.status_projeto = status_projeto;
+		this.descricao = descricao;
+	}
 	
 	//=======================getter e setter id
 	public int getid()
@@ -13,7 +25,7 @@ public class projeto {
 		return this.id;
 	}
 	
-	public void setid(int id)
+	public void setid(Integer id)
 	{
 		this.id = id;
 	}
