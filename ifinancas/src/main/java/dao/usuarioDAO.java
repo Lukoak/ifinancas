@@ -56,4 +56,39 @@ public class usuarioDAO {
         }
     }
     
+    public boolean alterarStatus(int id, StatusUsuario novoStatus) {
+        String atualizar = "UPDATE usuario SET status_usuario = ? WHERE id = ?";
+        
+        try (Connection conn = conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(atualizar)) {
+            
+            stmt.setString(1, novoStatus.name());
+            stmt.setInt(2, id);
+            
+            return stmt.executeUpdate() > 0;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public boolean ajustarpefildeacesso(int id, int perfil_id)
+    {
+    	String ajusteacesso = "UPDATE usuario SET perfil_id = ? WHERE id = ?";
+    	
+    	try(Connection conn = conexao.getConexao();
+    			PreparedStatement stmt = conn.prepareStatement(ajusteacesso)){
+    		stmt.setInt(1, id);
+    		stmt.setInt(1, perfil_id);
+    		
+    		return stmt.executeUpdate() > 0;
+    		
+    	} catch (SQLException e)
+    	{
+    		e.printStackTrace();
+    		return false;
+    	}
+    }
+    
 }
