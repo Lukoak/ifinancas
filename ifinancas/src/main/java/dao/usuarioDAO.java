@@ -11,7 +11,7 @@ import util.conexao;
 
 public class usuarioDAO {
 
-    public usuario autenticar(String identifier, String password) {
+    public usuario autenticar(usuario identifier, usuario password) {
         String consulta = "SELECT u.* " +
                      "FROM usuario u " +
                      "WHERE u.email = ? AND u.senha_hash = ? AND u.status_usuario = 'Ativo'";
@@ -19,8 +19,8 @@ public class usuarioDAO {
         try (Connection conn = conexao.getConexao();
              PreparedStatement stmt = conn.prepareStatement(consulta)) {
             
-            stmt.setString(1, identifier);
-            stmt.setString(2, password);
+            stmt.setString(1, identifier.getemail());
+            stmt.setString(2, password.getsenha_hash());
             
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -39,15 +39,15 @@ public class usuarioDAO {
         return null;
     }
 	
-    public boolean cadastrar(String nome, String email, String senha_hash) {
+    public boolean cadastrar(usuario nome, usuario email, usuario senha_hash) {
         String inserir = "INSERT INTO usuario (nome, email, senha_hash) VALUES (?, ?, ?)";
         
         try (Connection conn = conexao.getConexao();
              PreparedStatement stmt = conn.prepareStatement(inserir)) {
             
-            stmt.setString(1, nome);
-            stmt.setString(2, email);
-            stmt.setString(3, senha_hash);
+            stmt.setString(1, nome.getnome());
+            stmt.setString(2, email.getemail());
+            stmt.setString(3, senha_hash.getsenha_hash());
             
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
