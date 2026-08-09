@@ -10,7 +10,6 @@ import util.conexao;
 public class projetoDAO {
 	
 	public boolean insereprojeto(projeto p) {
-		// Parêntese fechado corretamente na sintaxe do SQL.
 		String inserir_projeto = "INSERT INTO projeto (coordenador_id, titulo, status_projeto, descricao) VALUES (?, ?, ?, ?)";
 		
 		try (Connection conn = conexao.getConexao();
@@ -18,7 +17,7 @@ public class projetoDAO {
 			
 			stmt.setInt(1, p.getcoordenador_id());
 			stmt.setString(2, p.gettitulo());
-			stmt.setString(3, p.getStatus_projeto());
+			stmt.setString(3, p.getStatus_projeto().name());
 			stmt.setString(4, p.getDescricao());
 			
 			return stmt.executeUpdate() > 0;
