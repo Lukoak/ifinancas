@@ -2,20 +2,24 @@ package dao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import model.Item;
 import util.conexao;
 
 public class itemDAO {
 
-	public boolean insere_item(String nome, Boolean status)
-	{
-		String inserir = "INSERT INTO item(nome, ativo) VALUES (?,?) ";
-		
-		try (Connection conn = conexao.getConexao();
-			PreparedStatement stmt = conn.prepareStatement(inserir)) {
+    public boolean inserir(Item item) {
+        String sql = "INSERT INTO item (nome, ativo) VALUES (?, ?)";
+        
+        try (Connection conn = conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setString(1, nome);
-            stmt.setBoolean(2, status);
+            stmt.setString(1, item.getNome());
+            stmt.setBoolean(2, item.isAtivo());
             
             return stmt.executeUpdate() > 0;
             
@@ -23,7 +27,26 @@ public class itemDAO {
             e.printStackTrace();
             return false;
         }
-		
-	}
-	
+    }
+
+    public List<Item> listarAtivos() {
+        List<Item> lista = new ArrayList<>();
+        String sql = "SELECT * FROM item WHERE ativo = true ORDER BY nome";
+        
+        try (Connection conn = conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            
+            while (rs.next()) {
+                Item i = new Item();
+                i.setId(rs.getInt("id"));
+                i.setNome(rs.getString("nome"));
+                i.setAtivo(rs.getBoolean("ativo"));
+                lista.add(i);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return lista;
+    }
 }
