@@ -42,7 +42,11 @@ public class ProjetoController extends HttpServlet {
             int idProjeto = Integer.parseInt(request.getParameter("idProjeto"));
             pDao.deletar(idProjeto);
             response.sendRedirect("pages/listaProjetosAdmin.jsp");
-        }
+        } else if ("finalizarProjeto".equals(acao)) {
+	        int idProjeto = Integer.parseInt(request.getParameter("idProjeto"));
+	        pDao.atualizarStatus(idProjeto, StatusProjeto.FINALIZADO);
+	        response.sendRedirect("pages/gerenciarOrcamento.jsp?id=" + idProjeto);
+	    }
     }
 
     private void salvarProjeto(HttpServletRequest request, HttpServletResponse response) 
@@ -100,4 +104,9 @@ public class ProjetoController extends HttpServlet {
 
         response.sendRedirect("pages/aprovacaoCadastro.jsp");
     }
+    
+    
+
+    
+    
 }

@@ -57,7 +57,7 @@
         .financiador-linha { display: flex; flex-direction: column; gap: 8px; }
         .checklist label { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; color: #333; margin: 0; cursor: pointer; }
         .checklist input[type="checkbox"] { width: auto; }
-        .valor-financiador { margin-left: 26px; width: calc(100% - 26px); }
+        .valor-financiador { margin-left: 4px; width: calc(100% - 4px); }
         .valor-financiador:disabled { background-color: #edf1f4; color: #a0aec0; }
         .info-coordenador { background-color: #e1f2e5; color: #1d3c25; padding: 12px 15px; border-radius: 6px; font-size: 13px; font-weight: 600; margin-bottom: 20px; }
         .btn-container { display: flex; gap: 15px; margin-top: 25px; }
@@ -112,7 +112,7 @@
 
                     <div class="form-group">
                         <label>Breve Descrição / Objetivo</label>
-                        <textarea name="descricao" rows="3" placeholder="Descreva sucintamente a finalidade deste projeto..." required></textarea>
+                        <textarea name="descricao" rows="3" placeholder="Descreva a finalidade deste projeto" required></textarea>
                     </div>
 
                     <div class="form-group">
@@ -139,17 +139,6 @@
                             %>
                         </div>
                         <small>Os valores dos financiadores selecionados definem o aporte orçamentário do projeto.</small>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Data de Início</label>
-                            <input type="date" name="dataInicio" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Data de Término</label>
-                            <input type="date" name="dataFim" required>
-                        </div>
                     </div>
 
                     <div class="form-group">

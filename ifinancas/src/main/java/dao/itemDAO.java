@@ -49,4 +49,46 @@ public class itemDAO {
         }
         return lista;
     }
+    
+    public List<Item> listarTodos() {
+        List<Item> lista = new ArrayList<>();
+        String sql = "SELECT * FROM item ORDER BY nome ASC";
+
+        try (Connection conn = conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Item item = new Item();
+                item.setId(rs.getInt("id"));
+                item.setNome(rs.getString("nome"));
+                item.setAtivo(rs.getBoolean("ativo"));
+                lista.add(item);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return lista;
+    }
+    
+    public Item buscarPorId(int id) {
+        String sql = "SELECT * FROM item WHERE id = ?";
+        try (Connection conn = conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Item i = new Item();
+                    i.setId(rs.getInt("id"));
+                    i.setNome(rs.getString("nome"));
+                    i.setAtivo(rs.getBoolean("ativo"));
+                    return i;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

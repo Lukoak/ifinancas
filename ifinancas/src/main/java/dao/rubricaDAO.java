@@ -55,4 +55,31 @@ public class rubricaDAO {
         }
         return lista;
     }
+    
+    public List<Rubrica> listarTodos() {
+        List<Rubrica> lista = new ArrayList<>();
+        String sql = "SELECT * FROM rubrica ORDER BY categoria ASC";
+
+        try (Connection conn = conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Rubrica r = new Rubrica();
+                r.setId(rs.getInt("id"));
+                
+                // Converte a string do banco ("SERVICO TERCEIRO PJ") para o formato do Enum ("SERVICO_TERCEIRO_PJ")
+                String categoriaDb = rs.getString("categoria");
+                if (categoriaDb != null) {
+                    r.setCategoria(CategoriaRubrica.valueOf(categoriaDb.replace(" ", "_")));
+                }
+                
+                r.setFkItem(rs.getInt("fk_item"));
+                lista.add(r);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return lista;
+    }
 }

@@ -38,4 +38,29 @@ public class financiadorDAO {
         }
         return lista;
     }
+    public Financiador buscarPorId(int id) {
+        String sql = "SELECT * FROM financiador WHERE id = ?";
+        try (Connection conn = conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Financiador f = new Financiador();
+                    f.setId(rs.getInt("id"));
+                    
+                    String nomeBanco = rs.getString("nome");
+                    if (nomeBanco != null) {
+                        f.setNome(NomeFinanciador.valueOf(nomeBanco.toUpperCase()));
+                    }
+                    
+                    f.setInvestimento(rs.getBigDecimal("investimento"));
+                    return f;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
