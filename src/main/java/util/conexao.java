@@ -1,4 +1,4 @@
-/*package util;
+package util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -19,9 +19,8 @@ public class conexao {
     }
 }
 
-*/
 
-package util;
+/*package util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -45,4 +44,4 @@ public class conexao {
             throw new SQLException("Driver JDBC do MySQL não encontrado!", e);
         }
     }
-}
+}*/

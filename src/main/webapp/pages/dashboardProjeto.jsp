@@ -2,11 +2,22 @@
 <%@ page import="model.Usuario" %>
 <%@ page import="model.Projeto" %>
 <%@ page import="model.Macroetapa" %>
+<%@ page import="model.ItemOrcamento" %>
+<%@ page import="model.StatusProjeto" %>
+<%@ page import="model.ProjetoFinanciador" %>
+<%@ page import="model.Rubrica" %>
 <%@ page import="dao.projetoDAO" %>
 <%@ page import="dao.macroetapaDAO" %>
 <%@ page import="dao.itemOrcamentoDAO" %>
-<%@ page import="java.math.BigDecimal" %>
+<%@ page import="dao.projetoFinanciadorDAO" %>
+<%@ page import="dao.rubricaDAO" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.LinkedHashMap" %>
+<%@ page import="java.math.BigDecimal" %>
+<%@ page import="java.text.NumberFormat" %>
+<%@ page import="java.util.Locale" %>
 <%
     Usuario usuarioLogado = (Usuario) session.getAttribute("usuarioLogado");
     if (usuarioLogado == null) {
@@ -19,14 +30,16 @@
     projetoDAO pDao = new projetoDAO();
     macroetapaDAO mDao = new macroetapaDAO();
     itemOrcamentoDAO ioDao = new itemOrcamentoDAO();
+    projetoFinanciadorDAO pfDao = new projetoFinanciadorDAO();
+    rubricaDAO rDao = new rubricaDAO();
 
     Projeto projeto = pDao.buscarPorId(idProjeto);
-
     if (projeto == null) {
         response.sendRedirect("listaProjetos.jsp");
         return;
     }
 
+    // Só o próprio coordenador ou o ADMIN podem ver o dashboard do projeto.
     boolean podeVer = (usuarioLogado.getPerfilId() == 2) || (projeto.getCoordenadorId() == usuarioLogado.getId());
     if (!podeVer) {
         response.sendRedirect("listaProjetos.jsp");
@@ -35,11 +48,35 @@
 
     String voltarPara = (usuarioLogado.getPerfilId() == 2) ? "listaProjetosAdmin.jsp" : "gerenciarOrcamento.jsp?id=" + projeto.getId();
 
+    // Carregando os dados reais do banco
     BigDecimal totalGeral = ioDao.calcularTotalProjeto(idProjeto);
     if (totalGeral == null) totalGeral = BigDecimal.ZERO;
 
     List<Macroetapa> macroetapas = mDao.listarPorProjeto(idProjeto);
-    int totalMacroetapas = (macroetapas != null) ? macroetapas.size() : 0;
+    List<ProjetoFinanciador> financiadores = pfDao.listarPorProjeto(idProjeto);
+    
+    // Mapeamento de Rubricas para agrupar nos gráficos
+    List<Rubrica> todasRubricas = rDao.listarTodos();
+    Map<Integer, String> mapaRubricas = new HashMap<>();
+    for (Rubrica r : todasRubricas) {
+        mapaRubricas.put(r.getFkItem(), r.getCategoria() != null ? r.getCategoria().name().replace("_", " ") : "-");
+    }
+
+    // Pré-calculando os totais por macroetapa para facilitar o uso no JS
+    Map<Integer, BigDecimal> totaisPorMacroetapa = new HashMap<>();
+    Map<Integer, List<ItemOrcamento>> itensPorMacroetapa = new HashMap<>();
+    for (Macroetapa m : macroetapas) {
+        List<ItemOrcamento> itens = ioDao.listarPorMacroetapa(m.getId());
+        itensPorMacroetapa.put(m.getId(), itens);
+        
+        BigDecimal totalM = BigDecimal.ZERO;
+        for (ItemOrcamento io : itens) {
+            if (io.getValorTotal() != null) totalM = totalM.add(io.getValorTotal());
+        }
+        totaisPorMacroetapa.put(m.getId(), totalM);
+    }
+
+    NumberFormat formatoMoeda = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
 %>
 <!DOCTYPE html>
 <html>
@@ -47,55 +84,171 @@
     <meta charset="UTF-8">
     <title>Dashboard - <%= projeto.getTitulo() %></title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/css/ifinance-base.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Montserrat', sans-serif; margin: 0; padding: 0; }
         body { background-color: #f7f8fa; padding: 40px; color: #1f2d24; }
+
         .container { max-width: 1100px; margin: 0 auto; }
+
+        /* ==== CABEÇALHO ==== */
         .topo { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
-        .topo h1 { font-size: 22px; font-weight: 700; color: #1d3c25; }
-        .topo p { font-size: 14px; color: #6c757d; margin-top: 4px; }
-        .btn-voltar { padding: 8px 16px; background: none; color: #1d3c25; border: 1px solid #dbe2e5; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px; transition: all 0.2s; }
-        .btn-voltar:hover { border-color: #1d3c25; background-color: #1d3c25; color: white; }
-        .resumo-cards { display: flex; gap: 20px; margin-bottom: 30px; }
-        .resumo-card { flex: 1; background: white; border-radius: 10px; padding: 20px; border: 1px solid #edf0f2; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        .resumo-card .titulo { font-size: 12px; text-transform: uppercase; color: #8a97a0; font-weight: 700; letter-spacing: 0.5px; }
-        .resumo-card .valor { font-size: 24px; font-weight: 700; color: #1d3c25; margin-top: 8px; }
-        .detalhes-card { background: white; border-radius: 10px; padding: 25px; border: 1px solid #edf0f2; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 30px; }
-        .detalhes-card h3 { font-size: 16px; color: #1d3c25; font-weight: 700; margin-bottom: 12px; }
-        .detalhes-card p { font-size: 14px; color: #4a5568; line-height: 1.6; }
-        .badge-status { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-top: 10px; background-color: #c6f6d5; color: #22543d; }
+        .topo h1 { font-size: 19px; font-weight: 600; color: #1d3c25; }
+        .topo p { font-size: 13px; color: #8a97a0; margin-top: 3px; }
+        .btn-voltar { padding: 8px 16px; background: none; color: #1d3c25; border: 1px solid #dbe2e5; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px; }
+        .btn-voltar:hover { border-color: #1d3c25; }
+
+        /* ==== CARDS DE RESUMO ==== */
+        .resumo-cards { display: flex; gap: 16px; margin-bottom: 30px; }
+        .resumo-card { flex: 1; background: white; border-radius: 8px; padding: 16px 18px; border: 1px solid #edf0f2; }
+        .resumo-card .titulo { font-size: 11px; text-transform: uppercase; color: #a3adb3; font-weight: 600; letter-spacing: 0.4px; }
+        .resumo-card .valor { font-size: 19px; font-weight: 700; color: #1d3c25; margin-top: 5px; }
+
+        /* ==== SEÇÃO GERAL ==== */
+        .secao-titulo { font-size: 13px; font-weight: 700; color: #8a97a0; text-transform: uppercase; letter-spacing: 0.5px; margin: 30px 0 14px; }
+
+        .graficos-gerais { display: flex; gap: 16px; }
+        .grafico-card { flex: 1; background: white; border-radius: 8px; padding: 18px 20px; border: 1px solid #edf0f2; }
+        .grafico-card h3 { font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 14px; }
+        .grafico-wrap { max-width: 220px; margin: 0 auto; }
+        .grafico-vazio { color: #c2c9cd; font-style: italic; font-size: 12px; text-align: center; padding: 50px 0; }
+
+        /* ==== DETALHAMENTO POR MACROETAPA ==== */
+        .macroetapas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+        .macroetapa-mini-card { background: white; border-radius: 8px; padding: 16px 18px; border: 1px solid #edf0f2; }
+        .macroetapa-mini-card h4 { font-size: 13px; font-weight: 600; color: #1d3c25; margin-bottom: 3px; }
+        .macroetapa-mini-card .total { font-size: 12px; color: #8a97a0; margin-bottom: 12px; }
+        .grafico-mini-wrap { max-width: 150px; margin: 0 auto; }
     </style>
 </head>
 <body>
 <div class="container">
+
     <div class="topo">
         <div>
             <h1><%= projeto.getTitulo() %></h1>
-            <p>Painel de acompanhamento e indicadores orçamentários</p>
+            <p>Dashboard do projeto</p>
         </div>
-        <a href="<%= voltarPara %>" class="btn-voltar">← Voltar</a>
+        <a href="<%= voltarPara %>" class="btn-voltar">Voltar</a>
     </div>
 
     <div class="resumo-cards">
         <div class="resumo-card">
-            <div class="titulo">Total Geral Orçado</div>
-            <div class="valor">R$ <%= String.format("%,.2f", totalGeral) %></div>
+            <div class="titulo">Total Geral</div>
+            <div class="valor"><%= formatoMoeda.format(totalGeral) %></div>
         </div>
         <div class="resumo-card">
-            <div class="titulo">Macroetapas Cadastradas</div>
-            <div class="valor"><%= totalMacroetapas %></div>
+            <div class="titulo">Macroetapas</div>
+            <div class="valor"><%= macroetapas.size() %></div>
         </div>
         <div class="resumo-card">
-            <div class="titulo">Duração Prevista</div>
-            <div class="valor"><%= projeto.getDuracao() %> mês(es)</div>
+            <div class="titulo">Financiadores</div>
+            <div class="valor"><%= financiadores.size() %></div>
         </div>
     </div>
 
-    <div class="detalhes-card">
-        <h3>Descrição do Projeto</h3>
-        <p><%= projeto.getDescricao() %></p>
-        <span class="badge-status"><%= projeto.getStatusProjeto() %></span>
+    <div class="secao-titulo">Visão Geral do Projeto</div>
+    <div class="graficos-gerais">
+        <div class="grafico-card">
+            <h3>Gastos por Macroetapa</h3>
+            <% if (totalGeral.compareTo(BigDecimal.ZERO) == 0) { %>
+                <div class="grafico-vazio">Sem itens cadastrados ainda.</div>
+            <% } else { %>
+                <div class="grafico-wrap"><canvas id="graficoMacroetapas"></canvas></div>
+            <% } %>
+        </div>
+        <div class="grafico-card">
+            <h3>Participação dos Financiadores</h3>
+            <% if (financiadores.isEmpty()) { %>
+                <div class="grafico-vazio">Nenhum financiador vinculado.</div>
+            <% } else { %>
+                <div class="grafico-wrap"><canvas id="graficoFinanciadores"></canvas></div>
+            <% } %>
+        </div>
     </div>
+
+    <div class="secao-titulo">Gastos por Rubrica em Cada Macroetapa</div>
+    <div class="macroetapas-grid">
+        <% for (Macroetapa m : macroetapas) { 
+            BigDecimal totalM = totaisPorMacroetapa.get(m.getId());
+            List<ItemOrcamento> itens = itensPorMacroetapa.get(m.getId());
+        %>
+            <div class="macroetapa-mini-card">
+                <h4><%= m.getDescricao() %></h4>
+                <div class="total"><%= formatoMoeda.format(totalM) %></div>
+                <% if (itens == null || itens.isEmpty()) { %>
+                    <div class="grafico-vazio">Sem itens.</div>
+                <% } else { %>
+                    <div class="grafico-mini-wrap"><canvas id="graficoMacro<%= m.getId() %>"></canvas></div>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+
 </div>
+
+<script>
+    var CORES = ['#1d3c25', '#3e863e', '#7da085', '#c9a96e', '#a3adb3', '#6c757d'];
+
+    <% if (totalGeral.compareTo(BigDecimal.ZERO) > 0) { %>
+    new Chart(document.getElementById('graficoMacroetapas'), {
+        type: 'doughnut',
+        data: {
+            labels: [ <% for (Macroetapa m : macroetapas) { %> "<%= m.getDescricao() %>", <% } %> ],
+            datasets: [{
+                data: [ <% for (Macroetapa m : macroetapas) { %> <%= totaisPorMacroetapa.get(m.getId()).toString() %>, <% } %> ],
+                backgroundColor: CORES,
+                borderWidth: 0
+            }]
+        },
+        options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } } }
+    });
+    <% } %>
+
+    <% if (!financiadores.isEmpty()) { %>
+    new Chart(document.getElementById('graficoFinanciadores'), {
+        type: 'doughnut',
+        data: {
+            labels: [ <% for (ProjetoFinanciador pf : financiadores) { %> "<%= pf.getNomeFinanciador().name() %>", <% } %> ],
+            datasets: [{
+                data: [ <% for (ProjetoFinanciador pf : financiadores) { %> <%= pf.getInvestimento().toString() %>, <% } %> ],
+                backgroundColor: CORES,
+                borderWidth: 0
+            }]
+        },
+        options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } } }
+    });
+    <% } %>
+
+    <% 
+    for (Macroetapa m : macroetapas) {
+        List<ItemOrcamento> itens = itensPorMacroetapa.get(m.getId());
+        if (itens == null || itens.isEmpty()) continue;
+        
+        // Agrupa os itens dessa macroetapa por rubrica, somando o subtotal de cada uma.
+        LinkedHashMap<String, BigDecimal> porRubrica = new LinkedHashMap<>();
+        for (ItemOrcamento item : itens) {
+            String rubricaStr = mapaRubricas.getOrDefault(item.getFkItemId(), "Não definida");
+            BigDecimal atual = porRubrica.getOrDefault(rubricaStr, BigDecimal.ZERO);
+            if (item.getValorTotal() != null) {
+                porRubrica.put(rubricaStr, atual.add(item.getValorTotal()));
+            }
+        }
+    %>
+    new Chart(document.getElementById('graficoMacro<%= m.getId() %>'), {
+        type: 'doughnut',
+        data: {
+            labels: [ <% for (String rubrica : porRubrica.keySet()) { %> "<%= rubrica %>", <% } %> ],
+            datasets: [{
+                data: [ <% for (BigDecimal valor : porRubrica.values()) { %> <%= valor.toString() %>, <% } %> ],
+                backgroundColor: CORES,
+                borderWidth: 0
+            }]
+        },
+        options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, font: { size: 9 } } } } }
+    });
+    <% } %>
+</script>
 </body>
 </html>
