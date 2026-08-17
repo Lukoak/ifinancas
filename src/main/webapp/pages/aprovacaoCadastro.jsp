@@ -79,6 +79,8 @@
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
         .top-bar { background-color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 10; }
         .top-bar h1 { font-size: 22px; color: #333; font-weight: 600; }
+        .logout-btn { color: #dc3545; text-decoration: none; font-size: 14px; font-weight: bold; }
+        .logout-btn:hover { text-decoration: underline; }
         .approval-container { display: flex; flex: 1; overflow: hidden; }
         .list-pane { width: 350px; background: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; }
         .list-header { padding: 20px; border-bottom: 1px solid #e2e8f0; }
