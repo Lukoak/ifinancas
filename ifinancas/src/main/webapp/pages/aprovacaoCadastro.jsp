@@ -64,7 +64,7 @@
         .sidebar-top { padding: 0 20px; }
         .logo-box { display: flex; align-items: center; gap: 10px; margin-bottom: 35px; }
         .logo-box img { max-width: 40px; height: auto; }
-        .logo-box h2 { font-size: 20px; font-weight: 700; }
+        .logo-box h2 { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
         .menu-label { font-size: 11px; text-transform: uppercase; color: #7da085; font-weight: bold; letter-spacing: 1px; margin-bottom: 10px; display: block; }
         .nav-menu { list-style: none; }
         .nav-item { margin-bottom: 5px; }
@@ -77,7 +77,7 @@
         .user-name { font-size: 13px; font-weight: 600; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .user-role { font-size: 11px; color: #7da085; text-transform: uppercase; font-weight: bold; }
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        .top-bar { background-color: white; padding: 15px 30px; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 10; }
+        .top-bar { background-color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 10; }
         .top-bar h1 { font-size: 22px; color: #333; font-weight: 600; }
         .approval-container { display: flex; flex: 1; overflow: hidden; }
         .list-pane { width: 350px; background: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; }
@@ -133,17 +133,17 @@
                 <img src="${pageContext.request.contextPath}/images/logo-dashboard.png" alt="Ifinance Logo">
                 <h2>Ifinance</h2>
             </div>
-            <span class="menu-label">Administração</span>
+            <span class="menu-label">Painel</span>
             <ul class="nav-menu">
-                <li class="nav-item"><a href="listaProjetosAdmin.jsp" class="nav-link">Visão Geral</a></li>
-                <li class="nav-item"><a href="aprovacaoCadastro.jsp" class="nav-link active">Caixa de Entrada</a></li>
+                <li class="nav-item"><a href="listaProjetosAdmin.jsp" class="nav-link">Projetos</a></li>
+                <li class="nav-item"><a href="aprovacaoCadastro.jsp" class="nav-link active">Aprovações</a></li>
             </ul>
         </div>
         <a href="perfil.jsp" class="sidebar-footer">
             <div class="avatar"><%= inicial %></div>
             <div class="user-info">
                 <div class="user-name" title="<%= usuarioLogado.getEmail() %>"><%= usuarioLogado.getNome() %></div>
-                <div class="user-role">ADMINISTRADOR</div>
+                <div class="user-role">ADMIN</div>
             </div>
         </a>
     </div>
@@ -151,6 +151,7 @@
     <div class="main-content">
         <div class="top-bar">
             <h1>Caixa de Entrada - Solicitações</h1>
+            <a href="../UsuarioController?acao=logout" class="logout-btn">Sair</a>
         </div>
 
         <div class="approval-container">
