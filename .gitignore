@@ -1,0 +1,11 @@
+/build/
+/bin/
+.metadata/
+*.class
+.settings/
+.classpath
+.project
+.DS_Store
+Thumbs.db
+!Dockerfile
+!target/avaliaqui.war
