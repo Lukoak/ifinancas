@@ -1,0 +1,7 @@
+/build/
+.settings/
+.metadata/
+build/
+*.class
+!Dockerfile
+!target/avaliaqui.war
