@@ -7,16 +7,20 @@ public class Projeto {
     private StatusProjeto statusProjeto;
     private String descricao;
     private int duracao;
+    private boolean solicitacaoFinalizacao;
+    private String justificativaFinalizacao;
 
     public Projeto() {}
 
-    public Projeto(Integer id, int coordenadorId, String titulo, StatusProjeto statusProjeto, String descricao, int duracao) {
+    public Projeto(Integer id, int coordenadorId, String titulo, StatusProjeto statusProjeto, String descricao, int duracao, boolean solicitacaoFinalizacao, String justificativaFinalizacao) {
         this.id = id;
         this.coordenadorId = coordenadorId;
         this.titulo = titulo;
         this.statusProjeto = statusProjeto;
         this.descricao = descricao;
         this.duracao = duracao;
+        this.solicitacaoFinalizacao = solicitacaoFinalizacao;
+        this.justificativaFinalizacao = justificativaFinalizacao;
     }
 
     public Integer getId() {
@@ -65,5 +69,19 @@ public class Projeto {
 
     public void setDuracao(int duracao) {
         this.duracao = duracao;
+    }
+    
+    public boolean isSolicitacaoFinalizacao() { 
+    	return solicitacaoFinalizacao; 
+    }
+    public void setSolicitacaoFinalizacao(boolean solicitacaoFinalizacao) { 
+    	this.solicitacaoFinalizacao = solicitacaoFinalizacao; 
+    }
+
+    public String getJustificativaFinalizacao() { 
+    	return justificativaFinalizacao; 
+    }
+    public void setJustificativaFinalizacao(String justificativaFinalizacao) { 
+    	this.justificativaFinalizacao = justificativaFinalizacao; 
     }
 }

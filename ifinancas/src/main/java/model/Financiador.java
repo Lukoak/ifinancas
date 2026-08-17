@@ -1,18 +1,14 @@
 package model;
 
-import java.math.BigDecimal;
-
 public class Financiador {
     private Integer id;
     private NomeFinanciador nome;
-    private BigDecimal investimento;
 
     public Financiador() {}
 
-    public Financiador(Integer id, NomeFinanciador nome, BigDecimal investimento) {
+    public Financiador(Integer id, NomeFinanciador nome) {
         this.id = id;
         this.nome = nome;
-        this.investimento = investimento;
     }
 
     public Integer getId() {
@@ -31,11 +27,4 @@ public class Financiador {
         this.nome = nome;
     }
 
-    public BigDecimal getInvestimento() {
-        return investimento;
-    }
-
-    public void setInvestimento(BigDecimal investimento) {
-        this.investimento = investimento;
-    }
 }

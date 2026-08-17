@@ -32,8 +32,16 @@ CREATE TABLE projeto (
 
 CREATE TABLE financiador (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nome ENUM('EMPRESA', 'EMBRAPII', 'FOMENTO (LC/SEBRAE/ETC)', 'IFBA') NOT NULL,
-    investimento DECIMAL(14,4) NOT NULL
+    nome ENUM('EMPRESA', 'EMBRAPII', 'FOMENTO (LC/SEBRAE/ETC)', 'IFBA') NOT NULL
+);
+
+CREATE TABLE projeto_financiador (
+    projeto_id INT NOT NULL,
+    financiador_id INT NOT NULL,
+    investimento DECIMAL(14,4) NOT NULL,
+    PRIMARY KEY (projeto_id, financiador_id),
+    CONSTRAINT fk_projeto_financiador_projeto FOREIGN KEY (projeto_id) REFERENCES projeto(id) ON DELETE CASCADE,
+    CONSTRAINT fk_projeto_financiador_financiador FOREIGN KEY (financiador_id) REFERENCES financiador(id) ON DELETE CASCADE
 );
 
 CREATE TABLE macroetapa (
@@ -95,3 +103,15 @@ GROUP BY p.id;
 -- Selects
 SELECT * FROM view_item_orcamento;
 SELECT * FROM view_duracao_projeto;
+
+
+INSERT INTO perfil_acesso (nome) VALUES ('COORDENADOR');
+INSERT INTO perfil_acesso (nome) VALUES ('ADMINISTRADOR');
+
+
+INSERT INTO financiador (nome) VALUES ('FOMENTO (LC/SEBRAE/ETC)');
+
+
+INSERT INTO usuario (perfil_id, nome, email, senha_hash) VALUES ('2','Lucas','admin@ifinance.com','123456');
+INSERT INTO usuario (perfil_id, nome, email, senha_hash) VALUES ('1','Lucas','admin2@ifinance.com','123456');
+

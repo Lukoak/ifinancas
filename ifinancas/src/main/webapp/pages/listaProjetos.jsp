@@ -113,7 +113,7 @@
 
         <div class="container">
             <% if (mostrarSucesso) { %>
-                <div class="toast-sucesso">✅ Projeto solicitado com sucesso! Aguarde a aprovação do ADMIN.</div>
+                <div class="toast-sucesso">Projeto solicitado com sucesso! Aguarde a aprovação do ADMIN.</div>
             <% } %>
             <div class="dashboard-widgets">
                 <div class="widget-card">

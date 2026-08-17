@@ -1,6 +1,7 @@
 package controller;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import jakarta.servlet.ServletException;
@@ -12,20 +13,24 @@ import jakarta.servlet.http.HttpSession;
 
 import dao.projetoDAO;
 import dao.macroetapaDAO;
+import dao.projetoFinanciadorDAO;
 import model.Projeto;
 import model.Macroetapa;
 import model.StatusProjeto;
 import model.Usuario;
+import model.ProjetoFinanciador;
 
 @WebServlet("/ProjetoController")
 public class ProjetoController extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private projetoDAO pDao;
     private macroetapaDAO mDao;
+    private projetoFinanciadorDAO pfDao;
 
     public void init() {
         pDao = new projetoDAO();
         mDao = new macroetapaDAO();
+        pfDao = new projetoFinanciadorDAO();
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
@@ -42,11 +47,14 @@ public class ProjetoController extends HttpServlet {
             int idProjeto = Integer.parseInt(request.getParameter("idProjeto"));
             pDao.deletar(idProjeto);
             response.sendRedirect("pages/listaProjetosAdmin.jsp");
-        } else if ("finalizarProjeto".equals(acao)) {
-	        int idProjeto = Integer.parseInt(request.getParameter("idProjeto"));
-	        pDao.atualizarStatus(idProjeto, StatusProjeto.FINALIZADO);
-	        response.sendRedirect("pages/gerenciarOrcamento.jsp?id=" + idProjeto);
-	    }
+        } else if ("solicitarFinalizacao".equals(acao)) {
+            int idProjeto = Integer.parseInt(request.getParameter("idProjeto"));
+            String justificativa = request.getParameter("justificativa");
+            pDao.solicitarFinalizacao(idProjeto, justificativa);
+            response.sendRedirect("pages/gerenciarOrcamento.jsp?id=" + idProjeto);
+        } else if ("processarFinalizacao".equals(acao)) {
+            processarFinalizacao(request, response);
+        }
     }
 
     private void salvarProjeto(HttpServletRequest request, HttpServletResponse response) 
@@ -64,6 +72,7 @@ public class ProjetoController extends HttpServlet {
         String descricao = request.getParameter("descricao");
         int numMacroetapas = Integer.parseInt(request.getParameter("macroetapas"));
 
+        // 1. Prepara e salva o projeto na tabela `projeto`
         Projeto p = new Projeto();
         p.setCoordenadorId(usuarioLogado.getId());
         p.setTitulo(titulo);
@@ -73,9 +82,11 @@ public class ProjetoController extends HttpServlet {
         boolean projetoSalvo = pDao.inserir(p);
 
         if (projetoSalvo) {
+            // Pega o ID do projeto recém-criado
             List<Projeto> projetos = pDao.listarPorCoordenador(usuarioLogado.getId());
-            Projeto projetoCriado = projetos.get(projetos.size() - 1);
+            Projeto projetoCriado = projetos.get(0); // Garante que pega o correto se listado DESC
 
+            // 2. Prepara e salva as Macroetapas em lote
             List<Macroetapa> macroetapasList = new ArrayList<>();
             for (int i = 1; i <= numMacroetapas; i++) {
                 Macroetapa m = new Macroetapa();
@@ -86,6 +97,27 @@ public class ProjetoController extends HttpServlet {
                 macroetapasList.add(m);
             }
             mDao.inserirEmLote(macroetapasList);
+
+            // 3. Lê os financiadores marcados e salva na tabela `projeto_financiador`
+            String[] financiadoresMarcados = request.getParameterValues("financiadorId");
+            if (financiadoresMarcados != null) {
+                for (String finIdStr : financiadoresMarcados) {
+                    int financiadorId = Integer.parseInt(finIdStr);
+                    // Lê o valor correspondente ao financiador (ex: valorFinanciador_1)
+                    String valorParam = request.getParameter("valorFinanciador_" + financiadorId);
+                    
+                    if (valorParam != null && !valorParam.isEmpty()) {
+                        BigDecimal investimento = new BigDecimal(valorParam);
+                        
+                        ProjetoFinanciador pf = new ProjetoFinanciador();
+                        pf.setProjetoId(projetoCriado.getId());
+                        pf.setFinanciadorId(financiadorId);
+                        pf.setInvestimento(investimento);
+                        
+                        pfDao.inserir(pf);
+                    }
+                }
+            }
 
             response.sendRedirect("pages/listaProjetos.jsp?sucesso=1");
         } else {
@@ -105,8 +137,11 @@ public class ProjetoController extends HttpServlet {
         response.sendRedirect("pages/aprovacaoCadastro.jsp");
     }
     
-    
-
-    
-    
+    private void processarFinalizacao(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
+        
+        int idProjeto = Integer.parseInt(request.getParameter("idProjeto"));
+        pDao.atualizarStatus(idProjeto, StatusProjeto.FINALIZADO);
+        response.sendRedirect("pages/aprovacaoCadastro.jsp");
+    }
 }

@@ -1,4 +1,4 @@
- package controller;
+package controller;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -10,17 +10,26 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import dao.itemOrcamentoDAO;
 import dao.macroetapaDAO;
+import dao.itemDAO;
+import dao.rubricaDAO;
 import model.ItemOrcamento;
+import model.Item;
+import model.Rubrica;
+import model.CategoriaRubrica;
 
 @WebServlet("/OrcamentoController")
 public class OrcamentoController extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private itemOrcamentoDAO ioDao;
     private macroetapaDAO mDao;
+    private itemDAO iDao;
+    private rubricaDAO rDao;
 
     public void init() {
         ioDao = new itemOrcamentoDAO();
         mDao = new macroetapaDAO();
+        iDao = new itemDAO();
+        rDao = new rubricaDAO();
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
@@ -32,19 +41,37 @@ public class OrcamentoController extends HttpServlet {
 
         if ("adicionarItem".equals(acao)) {
             int macroetapaId = Integer.parseInt(request.getParameter("macroetapaId"));
-            int fkItemId = Integer.parseInt(request.getParameter("fkItemId"));
+            
+            // Pega os textos preenchidos pelo coordenador na tela
+            String nomeItem = request.getParameter("nomeItem");
+            String categoriaRubricaStr = request.getParameter("categoriaRubrica");
             int financiadorId = Integer.parseInt(request.getParameter("financiadorId"));
             BigDecimal quantidade = new BigDecimal(request.getParameter("quantidade"));
             BigDecimal valorUnitario = new BigDecimal(request.getParameter("valorUnitario"));
 
-            ItemOrcamento item = new ItemOrcamento();
-            item.setMacroetapaId(macroetapaId);
-            item.setFkItemId(fkItemId);
-            item.setFinanciadorId(financiadorId);
-            item.setQuantidade(quantidade);
-            item.setValorUnitario(valorUnitario);
+            // 1. Cria o Item na tabela 'item'
+            Item novoItem = new Item();
+            novoItem.setNome(nomeItem);
+            novoItem.setAtivo(true);
+            int fkItemId = iDao.inserirERetornarId(novoItem);
 
-            ioDao.inserir(item);
+            // 2. Cria a Rubrica vinculada a esse item
+            if (fkItemId > 0 && categoriaRubricaStr != null) {
+                Rubrica novaRubrica = new Rubrica();
+                novaRubrica.setCategoria(CategoriaRubrica.valueOf(categoriaRubricaStr));
+                novaRubrica.setFkItem(fkItemId);
+                rDao.inserir(novaRubrica);
+
+                // 3. Salva a relação final no 'item_orcamento'
+                ItemOrcamento itemOrcamento = new ItemOrcamento();
+                itemOrcamento.setMacroetapaId(macroetapaId);
+                itemOrcamento.setFkItemId(fkItemId);
+                itemOrcamento.setFinanciadorId(financiadorId);
+                itemOrcamento.setQuantidade(quantidade);
+                itemOrcamento.setValorUnitario(valorUnitario);
+
+                ioDao.inserir(itemOrcamento);
+            }
 
         } else if ("atualizarMacroetapa".equals(acao)) {
             int macroetapaId = Integer.parseInt(request.getParameter("macroetapaId"));

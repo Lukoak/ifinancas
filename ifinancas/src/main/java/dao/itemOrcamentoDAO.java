@@ -7,42 +7,19 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
 import model.ItemOrcamento;
 import util.conexao;
 
 public class itemOrcamentoDAO {
 
     public boolean inserir(ItemOrcamento item) {
-        String sql = "INSERT INTO item_orcamento (macroetapa_id, fk_item_id, financiador_id, quantidade, valor_unitario) " +
-                     "VALUES (?, ?, ?, ?, ?)";
-        
-        try (Connection conn = conexao.getConexao();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
+        String sql = "INSERT INTO item_orcamento (macroetapa_id, fk_item_id, financiador_id, quantidade, valor_unitario) VALUES (?, ?, ?, ?, ?)";
+        try (Connection conn = conexao.getConexao(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, item.getMacroetapaId());
             stmt.setInt(2, item.getFkItemId());
             stmt.setInt(3, item.getFinanciadorId());
             stmt.setBigDecimal(4, item.getQuantidade());
             stmt.setBigDecimal(5, item.getValorUnitario());
-
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    public boolean atualizar(ItemOrcamento item) {
-        String sql = "UPDATE item_orcamento SET quantidade = ?, valor_unitario = ? WHERE id = ?";
-
-        try (Connection conn = conexao.getConexao();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setBigDecimal(1, item.getQuantidade());
-            stmt.setBigDecimal(2, item.getValorUnitario());
-            stmt.setInt(3, item.getId());
-
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -52,10 +29,7 @@ public class itemOrcamentoDAO {
 
     public boolean deletar(int id) {
         String sql = "DELETE FROM item_orcamento WHERE id = ?";
-        
-        try (Connection conn = conexao.getConexao();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
+        try (Connection conn = conexao.getConexao(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -67,78 +41,45 @@ public class itemOrcamentoDAO {
     public List<ItemOrcamento> listarPorMacroetapa(int macroetapaId) {
         List<ItemOrcamento> lista = new ArrayList<>();
         String sql = "SELECT * FROM view_item_orcamento WHERE macroetapa_id = ?";
-        
-        try (Connection conn = conexao.getConexao();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
+        try (Connection conn = conexao.getConexao(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, macroetapaId);
-            
             try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    lista.add(montarObjeto(rs));
+                while(rs.next()) {
+                    ItemOrcamento io = new ItemOrcamento();
+                    io.setId(rs.getInt("id"));
+                    io.setMacroetapaId(rs.getInt("macroetapa_id"));
+                    io.setFkItemId(rs.getInt("fk_item_id"));
+                    io.setFinanciadorId(rs.getInt("financiador_id"));
+                    io.setQuantidade(rs.getBigDecimal("quantidade"));
+                    io.setValorUnitario(rs.getBigDecimal("valor_unitario"));
+                    io.setValorTotal(rs.getBigDecimal("valor_total"));
+                    lista.add(io);
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return lista;
     }
 
     public BigDecimal calcularTotalProjeto(int projetoId) {
-        String sql = "SELECT SUM(io.valor_total) AS total " +
-                     "FROM view_item_orcamento io " +
-                     "INNER JOIN macroetapa m ON io.macroetapa_id = m.id " +
-                     "WHERE m.projeto_id = ?";
-                     
-        try (Connection conn = conexao.getConexao();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
+        String sql = "SELECT COALESCE(SUM(quantidade * valor_unitario), 0) AS total FROM item_orcamento io JOIN macroetapa m ON io.macroetapa_id = m.id WHERE m.projeto_id = ?";
+        try (Connection conn = conexao.getConexao(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, projetoId);
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next() && rs.getBigDecimal("total") != null) {
-                    return rs.getBigDecimal("total");
-                }
+            try(ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getBigDecimal("total");
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return BigDecimal.ZERO; 
-    }
-
-    public BigDecimal calcularTotalPorFinanciador(int projetoId, int financiadorId) {
-        String sql = "SELECT SUM(io.valor_total) AS total " +
-                     "FROM view_item_orcamento io " +
-                     "INNER JOIN macroetapa m ON io.macroetapa_id = m.id " +
-                     "WHERE m.projeto_id = ? AND io.financiador_id = ?";
-                     
-        try (Connection conn = conexao.getConexao();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setInt(1, projetoId);
-            stmt.setInt(2, financiadorId);
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next() && rs.getBigDecimal("total") != null) {
-                    return rs.getBigDecimal("total");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return BigDecimal.ZERO;
     }
 
-
-    private ItemOrcamento montarObjeto(ResultSet rs) throws SQLException {
-        ItemOrcamento item = new ItemOrcamento();
-        item.setId(rs.getInt("id"));
-        item.setMacroetapaId(rs.getInt("macroetapa_id"));
-        item.setFkItemId(rs.getInt("fk_item_id"));
-        item.setFinanciadorId(rs.getInt("financiador_id"));
-        item.setQuantidade(rs.getBigDecimal("quantidade"));
-        item.setValorUnitario(rs.getBigDecimal("valor_unitario"));
-        item.setValorTotal(rs.getBigDecimal("valor_total")); 
-        return item;
+    public BigDecimal calcularTotalPorFinanciador(int projetoId, int financiadorId) {
+        String sql = "SELECT COALESCE(SUM(io.quantidade * io.valor_unitario), 0) AS total FROM item_orcamento io JOIN macroetapa m ON io.macroetapa_id = m.id WHERE m.projeto_id = ? AND io.financiador_id = ?";
+        try (Connection conn = conexao.getConexao(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, projetoId);
+            stmt.setInt(2, financiadorId);
+            try(ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getBigDecimal("total");
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return BigDecimal.ZERO;
     }
 }
