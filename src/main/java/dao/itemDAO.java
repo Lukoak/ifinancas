@@ -86,4 +86,15 @@ public class itemDAO {
         } catch (SQLException e) { e.printStackTrace(); }
         return null;
     }
+    
+    public boolean atualizarNome(int id, String novoNome) {
+        String sql = "UPDATE item SET nome = ? WHERE id = ?";
+        try (java.sql.Connection conn = util.conexao.getConexao(); java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, novoNome);
+            stmt.setInt(2, id);
+            return stmt.executeUpdate() > 0;
+        } catch (java.sql.SQLException e) { e.printStackTrace(); return false; }
+    }
+    
+    
 }

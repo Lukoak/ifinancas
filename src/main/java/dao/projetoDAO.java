@@ -62,7 +62,7 @@ public class projetoDAO {
 
     public List<Projeto> listarTodos() {
         List<Projeto> lista = new ArrayList<>();
-        String sql = "SELECT * FROM projeto ORDER BY id DESC";
+        String sql = "SELECT p.*, u.nome AS nome_coordenador FROM projeto p INNER JOIN usuario u ON p.coordenador_id = u.id ORDER BY p.id DESC";
         try (Connection conn = conexao.getConexao(); PreparedStatement stmt = conn.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 lista.add(montarObjeto(rs));
@@ -73,7 +73,7 @@ public class projetoDAO {
 
     public List<Projeto> listarPorCoordenador(int coordenadorId) {
         List<Projeto> lista = new ArrayList<>();
-        String sql = "SELECT * FROM projeto WHERE coordenador_id = ? ORDER BY id DESC";
+        String sql = "SELECT p.*, u.nome AS nome_coordenador FROM projeto p INNER JOIN usuario u ON p.coordenador_id = u.id WHERE p.coordenador_id = ? ORDER BY p.id DESC";
         try (Connection conn = conexao.getConexao(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, coordenadorId);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -86,7 +86,7 @@ public class projetoDAO {
     }
 
     public Projeto buscarPorId(int id) {
-        String sql = "SELECT * FROM projeto WHERE id = ?";
+        String sql = "SELECT p.*, u.nome AS nome_coordenador FROM projeto p INNER JOIN usuario u ON p.coordenador_id = u.id WHERE p.id = ?";
         try (Connection conn = conexao.getConexao(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -107,6 +107,9 @@ public class projetoDAO {
         p.setStatusProjeto(StatusProjeto.valueOf(rs.getString("status_projeto")));
         p.setSolicitacaoFinalizacao(rs.getBoolean("solicitacao_finalizacao"));
         p.setJustificativaFinalizacao(rs.getString("justificativa_finalizacao"));
+        
+        p.setNomeCoordenador(rs.getString("nome_coordenador"));
+        
         return p;
     }
 }

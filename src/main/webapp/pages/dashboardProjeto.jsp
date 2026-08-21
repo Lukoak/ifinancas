@@ -48,21 +48,18 @@
 
     String voltarPara = (usuarioLogado.getPerfilId() == 2) ? "listaProjetosAdmin.jsp" : "gerenciarOrcamento.jsp?id=" + projeto.getId();
 
-    // Carregando os dados reais do banco
     BigDecimal totalGeral = ioDao.calcularTotalProjeto(idProjeto);
     if (totalGeral == null) totalGeral = BigDecimal.ZERO;
 
     List<Macroetapa> macroetapas = mDao.listarPorProjeto(idProjeto);
     List<ProjetoFinanciador> financiadores = pfDao.listarPorProjeto(idProjeto);
     
-    // Mapeamento de Rubricas para agrupar nos gráficos
     List<Rubrica> todasRubricas = rDao.listarTodos();
     Map<Integer, String> mapaRubricas = new HashMap<>();
     for (Rubrica r : todasRubricas) {
         mapaRubricas.put(r.getFkItem(), r.getCategoria() != null ? r.getCategoria().name().replace("_", " ") : "-");
     }
 
-    // Pré-calculando os totais por macroetapa para facilitar o uso no JS
     Map<Integer, BigDecimal> totaisPorMacroetapa = new HashMap<>();
     Map<Integer, List<ItemOrcamento>> itensPorMacroetapa = new HashMap<>();
     for (Macroetapa m : macroetapas) {
@@ -89,32 +86,22 @@
     <style>
         * { box-sizing: border-box; font-family: 'Montserrat', sans-serif; margin: 0; padding: 0; }
         body { background-color: #f7f8fa; padding: 40px; color: #1f2d24; }
-
         .container { max-width: 1100px; margin: 0 auto; }
-
-        /* ==== CABEÇALHO ==== */
         .topo { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
         .topo h1 { font-size: 19px; font-weight: 600; color: #1d3c25; }
         .topo p { font-size: 13px; color: #8a97a0; margin-top: 3px; }
         .btn-voltar { padding: 8px 16px; background: none; color: #1d3c25; border: 1px solid #dbe2e5; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px; }
         .btn-voltar:hover { border-color: #1d3c25; }
-
-        /* ==== CARDS DE RESUMO ==== */
         .resumo-cards { display: flex; gap: 16px; margin-bottom: 30px; }
         .resumo-card { flex: 1; background: white; border-radius: 8px; padding: 16px 18px; border: 1px solid #edf0f2; }
         .resumo-card .titulo { font-size: 11px; text-transform: uppercase; color: #a3adb3; font-weight: 600; letter-spacing: 0.4px; }
         .resumo-card .valor { font-size: 19px; font-weight: 700; color: #1d3c25; margin-top: 5px; }
-
-        /* ==== SEÇÃO GERAL ==== */
         .secao-titulo { font-size: 13px; font-weight: 700; color: #8a97a0; text-transform: uppercase; letter-spacing: 0.5px; margin: 30px 0 14px; }
-
         .graficos-gerais { display: flex; gap: 16px; }
         .grafico-card { flex: 1; background: white; border-radius: 8px; padding: 18px 20px; border: 1px solid #edf0f2; }
         .grafico-card h3 { font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 14px; }
         .grafico-wrap { max-width: 220px; margin: 0 auto; }
         .grafico-vazio { color: #c2c9cd; font-style: italic; font-size: 12px; text-align: center; padding: 50px 0; }
-
-        /* ==== DETALHAMENTO POR MACROETAPA ==== */
         .macroetapas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
         .macroetapa-mini-card { background: white; border-radius: 8px; padding: 16px 18px; border: 1px solid #edf0f2; }
         .macroetapa-mini-card h4 { font-size: 13px; font-weight: 600; color: #1d3c25; margin-bottom: 3px; }
@@ -190,6 +177,20 @@
 
 <script>
     var CORES = ['#1d3c25', '#3e863e', '#7da085', '#c9a96e', '#a3adb3', '#6c757d'];
+    
+    // Objeto Tooltip genérico para formatar Reais (R$) e a Porcentagem (%) no Chart.js
+    var tooltipsConfig = {
+        callbacks: {
+            label: function(context) {
+                let label = context.label || '';
+                let value = parseFloat(context.raw) || 0;
+                let dataset = context.chart.data.datasets[context.datasetIndex];
+                let total = dataset.data.reduce((a, b) => parseFloat(a) + parseFloat(b), 0);
+                let percentage = total > 0 ? Math.round((value / total) * 100) + '%' : '0%';
+                return label + ': R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' (' + percentage + ')';
+            }
+        }
+    };
 
     <% if (totalGeral.compareTo(BigDecimal.ZERO) > 0) { %>
     new Chart(document.getElementById('graficoMacroetapas'), {
@@ -202,7 +203,7 @@
                 borderWidth: 0
             }]
         },
-        options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } } }
+        options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } }, tooltip: tooltipsConfig } }
     });
     <% } %>
 
@@ -217,7 +218,7 @@
                 borderWidth: 0
             }]
         },
-        options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } } }
+        options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } }, tooltip: tooltipsConfig } }
     });
     <% } %>
 
@@ -226,7 +227,6 @@
         List<ItemOrcamento> itens = itensPorMacroetapa.get(m.getId());
         if (itens == null || itens.isEmpty()) continue;
         
-        // Agrupa os itens dessa macroetapa por rubrica, somando o subtotal de cada uma.
         LinkedHashMap<String, BigDecimal> porRubrica = new LinkedHashMap<>();
         for (ItemOrcamento item : itens) {
             String rubricaStr = mapaRubricas.getOrDefault(item.getFkItemId(), "Não definida");
@@ -246,7 +246,7 @@
                 borderWidth: 0
             }]
         },
-        options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, font: { size: 9 } } } } }
+        options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, font: { size: 9 } } }, tooltip: tooltipsConfig } }
     });
     <% } %>
 </script>

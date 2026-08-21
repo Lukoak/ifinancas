@@ -54,4 +54,13 @@ public class rubricaDAO {
         }
         return lista;
     }
+    
+    public boolean atualizarCategoria(int fkItemId, String categoria) {
+        String sql = "UPDATE rubrica SET categoria = ? WHERE fk_item = ?";
+        try (java.sql.Connection conn = util.conexao.getConexao(); java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, categoria.replace("_", " "));
+            stmt.setInt(2, fkItemId);
+            return stmt.executeUpdate() > 0;
+        } catch (java.sql.SQLException e) { e.printStackTrace(); return false; }
+    }
 }

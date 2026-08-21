@@ -116,7 +116,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Financiadores Disponíveis</label>
+                        <label>Financiadores</label>
                         <div class="checklist">
                             <% 
                             if (listaFinanciadores.isEmpty()) { 
@@ -138,13 +138,13 @@
                             } 
                             %>
                         </div>
-                        <small>Os valores dos financiadores selecionados definem o aporte orçamentário do projeto.</small>
+                        <small>Você pode definir o valor como 0.00 caso ainda não saiba o limite exato, e alterá-lo depois no orçamento.</small>
                     </div>
 
                     <div class="form-group">
                         <label>Quantidade de Macroetapas</label>
                         <input type="number" name="macroetapas" min="1" max="10" value="1" required>
-                        <small>As macroetapas serão geradas automaticamente e poderão ser ajustadas em "Gerenciar Orçamento".</small>
+                        <small>Máximo de 10 macroetapas. As macroetapas serão geradas automaticamente e poderão ser ajustadas em "Gerenciar Orçamento".</small>
                     </div>
 
                     <div class="btn-container">
@@ -162,7 +162,11 @@
             if (campo) {
                 campo.disabled = !marcado;
                 campo.required = marcado;
-                if (!marcado) campo.value = '';
+                if (marcado && campo.value === '') {
+                    campo.value = '0.00';
+                } else if (!marcado) {
+                    campo.value = '';
+                }
             }
         }
     </script>

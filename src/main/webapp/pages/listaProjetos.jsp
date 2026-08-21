@@ -1,9 +1,13 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.List" %>
+<%@ page import="java.math.BigDecimal" %>
+<%@ page import="java.text.NumberFormat" %>
+<%@ page import="java.util.Locale" %>
 <%@ page import="model.Usuario" %>
 <%@ page import="model.Projeto" %>
 <%@ page import="model.StatusProjeto" %>
 <%@ page import="dao.projetoDAO" %>
-<%@ page import="java.util.List" %>
+<%@ page import="dao.itemOrcamentoDAO" %>
 <%
     Usuario usuarioLogado = (Usuario) session.getAttribute("usuarioLogado");
     if (usuarioLogado == null) {
@@ -17,11 +21,22 @@
     }
 
     projetoDAO pDao = new projetoDAO();
+    itemOrcamentoDAO ioDao = new itemOrcamentoDAO();
     List<Projeto> meusProjetos = pDao.listarPorCoordenador(usuarioLogado.getId());
     boolean mostrarSucesso = "1".equals(request.getParameter("sucesso"));
     
     String inicial = (usuarioLogado.getNome() != null && !usuarioLogado.getNome().isEmpty()) 
                      ? usuarioLogado.getNome().substring(0, 1).toUpperCase() : "?";
+                     
+    // Calcula o Orçamento Total de todos os projetos deste coordenador
+    BigDecimal orcamentoTotal = BigDecimal.ZERO;
+    for (Projeto p : meusProjetos) {
+        BigDecimal totalP = ioDao.calcularTotalProjeto(p.getId());
+        if(totalP != null) {
+            orcamentoTotal = orcamentoTotal.add(totalP);
+        }
+    }
+    NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
 %>
 <!DOCTYPE html>
 <html>
@@ -113,7 +128,7 @@
 
         <div class="container">
             <% if (mostrarSucesso) { %>
-                <div class="toast-sucesso">Projeto solicitado com sucesso! Aguarde a aprovação do ADMIN.</div>
+                <div class="toast-sucesso">✅ Projeto solicitado com sucesso! Aguarde a aprovação do ADMIN.</div>
             <% } %>
             <div class="dashboard-widgets">
                 <div class="widget-card">
@@ -122,7 +137,8 @@
                 </div>
                 <div class="widget-card">
                     <span class="widget-title">Orçamento Total (meus projetos)</span>
-                    <span class="widget-value">R$ 0,00</span> </div>
+                    <span class="widget-value"><%= nf.format(orcamentoTotal) %></span> 
+                </div>
                 <div class="widget-card" style="justify-content: center; align-items: flex-start; background: transparent; box-shadow: none; padding: 0;">
                     <a href="cadastroProjeto.jsp" class="btn-primary" style="width: 100%; height: 55px;">+ Solicitar Novo Projeto</a>
                 </div>

@@ -217,10 +217,10 @@
 
                     <div class="pane-content">
                         <div class="info-grid">
-                            <div class="info-group">
-                                <span class="info-label">ID do Coordenador</span>
-                                <span class="info-value"><%= selecionado.getCoordenadorId() %></span>
-                            </div>
+							<div class="info-group">
+							    <span class="info-label">Coordenador Responsável</span>
+							    <span class="info-value"><%= selecionado.getNomeCoordenador() %></span>
+							</div>
                             <div class="info-group">
                                 <span class="info-label">Status Atual</span>
                                 <span class="info-value"><%= selecionado.getStatusProjeto() %></span>

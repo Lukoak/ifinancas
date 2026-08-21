@@ -82,4 +82,15 @@ public class itemOrcamentoDAO {
         } catch (SQLException e) { e.printStackTrace(); }
         return BigDecimal.ZERO;
     }
+    
+    public boolean atualizarItemCompleto(int id, int financiadorId, java.math.BigDecimal quantidade, java.math.BigDecimal valorUnitario) {
+        String sql = "UPDATE item_orcamento SET financiador_id = ?, quantidade = ?, valor_unitario = ? WHERE id = ?";
+        try (java.sql.Connection conn = util.conexao.getConexao(); java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, financiadorId);
+            stmt.setBigDecimal(2, quantidade);
+            stmt.setBigDecimal(3, valorUnitario);
+            stmt.setInt(4, id);
+            return stmt.executeUpdate() > 0;
+        } catch (java.sql.SQLException e) { e.printStackTrace(); return false; }
+    }
 }

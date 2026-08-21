@@ -32,7 +32,6 @@ public class projetoFinanciadorDAO {
                     
                     String nomeBanco = rs.getString("nome_financiador");
                     if (nomeBanco != null) {
-                        // Tratamento para evitar o erro do parênteses e espaços
                         if (nomeBanco.contains("FOMENTO")) {
                             pf.setNomeFinanciador(NomeFinanciador.FOMENTO);
                         } else {
@@ -57,5 +56,15 @@ public class projetoFinanciadorDAO {
             e.printStackTrace();
             return false;
         }
+    }
+    
+    public boolean atualizarInvestimento(int projetoId, int financiadorId, java.math.BigDecimal novoValor) {
+        String sql = "UPDATE projeto_financiador SET investimento = ? WHERE projeto_id = ? AND financiador_id = ?";
+        try (java.sql.Connection conn = util.conexao.getConexao(); java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setBigDecimal(1, novoValor);
+            stmt.setInt(2, projetoId);
+            stmt.setInt(3, financiadorId);
+            return stmt.executeUpdate() > 0;
+        } catch (java.sql.SQLException e) { e.printStackTrace(); return false; }
     }
 }

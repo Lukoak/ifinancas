@@ -1,8 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.math.BigDecimal" %>
+<%@ page import="java.text.NumberFormat" %>
+<%@ page import="java.util.Locale" %>
 <%@ page import="model.Usuario" %>
 <%@ page import="model.Projeto" %>
 <%@ page import="model.StatusProjeto" %>
 <%@ page import="dao.projetoDAO" %>
+<%@ page import="dao.itemOrcamentoDAO" %>
 <%@ page import="java.util.List" %>
 <%
     Usuario usuarioLogado = (Usuario) session.getAttribute("usuarioLogado");
@@ -10,17 +14,31 @@
         response.sendRedirect("../Tela_Login.jsp");
         return;
     }
-    // Se um coordenador cair aqui por engano, manda ele pra tela dele.
+    
+    // Se um coordenador cair aqui por engano, redireciona para a tela dele
     if (usuarioLogado.getPerfilId() != 2) {
         response.sendRedirect("listaProjetos.jsp");
         return;
     }
 
     projetoDAO pDao = new projetoDAO();
+    itemOrcamentoDAO ioDao = new itemOrcamentoDAO();
     List<Projeto> todosProjetos = pDao.listarTodos();
     
     String inicial = (usuarioLogado.getNome() != null && !usuarioLogado.getNome().isEmpty()) 
                      ? usuarioLogado.getNome().substring(0, 1).toUpperCase() : "?";
+                     
+    // Calcula o Orçamento Total apenas dos projetos FINALIZADOS
+    BigDecimal orcamentoTotalGlobal = BigDecimal.ZERO;
+    for (Projeto p : todosProjetos) {
+        if (p.getStatusProjeto() == StatusProjeto.FINALIZADO) {
+            BigDecimal totalP = ioDao.calcularTotalProjeto(p.getId());
+            if (totalP != null) {
+                orcamentoTotalGlobal = orcamentoTotalGlobal.add(totalP);
+            }
+        }
+    }
+    NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
 %>
 <!DOCTYPE html>
 <html>
@@ -55,9 +73,9 @@
         .widget-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.03); flex: 1; min-width: 0; }
         .widget-title { font-size: 13px; color: #6c757d; font-weight: 600; text-transform: uppercase; display: block; }
         .widget-value { font-size: 24px; font-weight: 700; color: #1d3c25; margin: 10px 0; display: block; white-space: nowrap; }
-        .btn-table-action { display: inline-block; padding: 6px 12px; background-color: transparent; color: #3e863e; border: 1px solid #3e863e; text-decoration: none; border-radius: 4px; font-size: 13px; font-weight: 600; transition: all 0.2s ease; }
+        .btn-table-action { display: inline-block; padding: 6px 12px; background-color: transparent; color: #3e863e; border: 1px solid #3e863e; text-decoration: none; border-radius: 4px; font-size: 13px; font-weight: 600; transition: all 0.2s ease; margin: 0 2px;}
         .btn-table-action:hover { background-color: #3e863e; color: white; }
-        .btn-delete { border: none; background: none; cursor: pointer; font-size: 16px; padding: 6px; line-height: 1; }
+        .btn-delete { border: none; background: none; cursor: pointer; font-size: 16px; padding: 6px; line-height: 1; margin: 0 2px;}
         .table-container { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.03); padding: 20px; }
         .table-header-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .table-header-area h3 { color: #1d3c25; font-size: 18px; font-weight: 600; }
@@ -65,7 +83,7 @@
         th, td { padding: 14px 16px; border-bottom: 1px solid #edf2f7; font-size: 15px; }
         th { background-color: #f8f9fa; color: #4a5568; font-weight: 600; }
         tr:hover { background-color: #fcfdfc; }
-        .acoes-cell { text-align: center; display: flex; gap: 8px; align-items: center; justify-content: center; }
+        .acoes-cell { text-align: center; display: flex; gap: 4px; align-items: center; justify-content: center; }
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
         .status-pendente { background-color: #feebc8; color: #c05621; }
         .status-aprovado { background-color: #c6f6d5; color: #22543d; }
@@ -101,7 +119,7 @@
     <div class="main-content">
         <div class="top-bar">
             <h1>Todos os Projetos</h1>
-            <a href="../UsuarioController?acao=logout" class="logout-btn">Sair</a>
+            <a href="${pageContext.request.contextPath}/UsuarioController?acao=logout" class="logout-btn">Sair</a>
         </div>
 
         <div class="container">
@@ -111,8 +129,8 @@
                     <span class="widget-value"><%= todosProjetos.size() %></span>
                 </div>
                 <div class="widget-card">
-                    <span class="widget-title">Orçamento Total Previsto</span>
-                    <span class="widget-value">R$ 0,00</span>
+                    <span class="widget-title">Orçamento Total (Finalizados)</span>
+                    <span class="widget-value"><%= nf.format(orcamentoTotalGlobal) %></span>
                 </div>
             </div>
 
@@ -128,7 +146,7 @@
                             <th>Título do Projeto</th>
                             <th>Coordenador</th>
                             <th style="width: 130px;">Status</th>
-                            <th style="width: 200px; text-align: center;">Ações</th>
+                            <th style="width: 250px; text-align: center;">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -139,17 +157,22 @@
                                 else if (p.getStatusProjeto() == StatusProjeto.REPROVADO) classeBadge = "status-reprovado";
                                 else if (p.getStatusProjeto() == StatusProjeto.FINALIZADO) classeBadge = "status-finalizado";
                                 else classeBadge = "status-pendente";
+                                
+                                String nomeCoordenadorExibir = (p.getNomeCoordenador() != null) ? p.getNomeCoordenador() : "ID: " + p.getCoordenadorId();
                         %>
                             <tr>
                                 <td><strong><%= p.getId() %></strong></td>
                                 <td><%= p.getTitulo() %></td>
-                                <td>ID: <%= p.getCoordenadorId() %></td>
+                                <td><%= nomeCoordenadorExibir %></td>
                                 <td>
                                     <span class="badge <%= classeBadge %>"><%= p.getStatusProjeto() %></span>
                                 </td>
                                 <td class="acoes-cell">
-                                    <a href="aprovacaoCadastro.jsp?id=<%= p.getId() %>" class="btn-table-action">Analisar / Aprovar</a>
-                                    <form action="../ProjetoController" method="POST" onsubmit="return confirm('Excluir este projeto?');" style="display:inline;">
+                                    <a href="aprovacaoCadastro.jsp?id=<%= p.getId() %>" class="btn-table-action" title="Analisar Cadastro e Finalizações">Detalhes</a>
+                                    
+                                    <a href="gerenciarOrcamento.jsp?id=<%= p.getId() %>" class="btn-table-action" style="color:#1d3c25; border-color:#1d3c25;" title="Gerenciar/Visualizar Orçamento do Projeto">Orçamento</a>
+                                    
+                                    <form action="../ProjetoController" method="POST" onsubmit="return confirm('ATENÇÃO: Excluir este projeto apagará todo o orçamento vinculado. Continuar?');" style="display:inline;">
                                         <input type="hidden" name="acao" value="excluir">
                                         <input type="hidden" name="idProjeto" value="<%= p.getId() %>">
                                         <button type="submit" class="btn-delete" title="Excluir projeto">🗑️</button>
